@@ -1,0 +1,132 @@
+@startuml
+
+' ===== Интерфейсы =====
+interface CourseFactory {
+  +createCourse(data)
+}
+
+interface Course {
+  +start()
+  +finish()
+  +getInfo()
+}
+
+interface GradingStrategy {
+  +calculateGrade(student, course)
+}
+
+interface NotificationService {
+  +sendNotification(user, message)
+}
+
+interface PaymentService {
+  +pay(student, course, amount)
+}
+
+' ===== CourseManager =====
+class CourseManager {
+  +createCourse(type, data)
+  +registerStudent(courseId, student)
+  +completeCourse(studentId, courseId)
+  +processPayment(studentId, courseId, amount)
+  +notifyStudent(event)
+}
+
+CourseManager --> CourseFactory : создаёт курсы через фабрику
+CourseManager --> GradingService : делегирует расчёт оценок
+CourseManager --> NotificationService : отправляет уведомления
+CourseManager --> PaymentService : обрабатывает оплату
+
+' ===== Factories =====
+class OnlineCourseFactory {
+  +createCourse(data)
+}
+
+class OfflineCourseFactory {
+  +createCourse(data)
+}
+
+CourseFactory <|.. OnlineCourseFactory : реализует
+CourseFactory <|.. OfflineCourseFactory : реализует
+
+OnlineCourseFactory --> OnlineCourse : создаёт
+OfflineCourseFactory --> OfflineCourse : создаёт
+
+' ===== Courses =====
+class OnlineCourse {
+  +start()
+  +finish()
+  +getMaterials()
+}
+
+class OfflineCourse {
+  +start()
+  +finish()
+  +getSchedule()
+}
+
+Course <|.. OnlineCourse : реализует
+Course <|.. OfflineCourse : реализует
+
+OnlineCourse --> GradingStrategy : использует стратегию
+OfflineCourse --> GradingStrategy : использует стратегию
+
+' ===== Strategy =====
+class ExamGradingStrategy {
+  +calculateGrade(student, course)
+}
+
+class ProjectGradingStrategy {
+  +calculateGrade(student, course)
+}
+
+GradingStrategy <|.. ExamGradingStrategy : реализует
+GradingStrategy <|.. ProjectGradingStrategy : реализует
+
+class GradingService {
+  +calculateFinalGrade(student, course)
+}
+
+GradingService --> GradingStrategy : выбирает алгоритм расчёта
+
+' ===== Notifications =====
+class EmailNotificationService {
+  +sendNotification(user, message)
+}
+
+class SmsNotificationService {
+  +sendNotification(user, message)
+}
+
+NotificationService <|.. EmailNotificationService : реализует
+NotificationService <|.. SmsNotificationService : реализует
+
+class NotificationManager {
+  +notify(event, user)
+  +subscribe(observer)
+}
+
+NotificationManager --> NotificationService : управляет уведомлениями
+
+CourseManager --> NotificationManager : инициирует уведомления
+
+' ===== Payment =====
+class ExternalPaymentApi {
+  +makePayment(request)
+}
+
+class PaymentAdapter {
+  +pay(student, course, amount)
+}
+
+PaymentService <|.. PaymentAdapter : адаптирует внешний API
+PaymentAdapter --> ExternalPaymentApi : вызывает внешний сервис
+
+class PaymentManager {
+  +payForCourse(student, course)
+}
+
+PaymentManager --> PaymentService : выполняет оплату
+CourseManager --> PaymentManager : инициирует оплату
+
+@enduml
